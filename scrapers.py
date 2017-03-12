@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-import re
-import urlparse
 import io
+import math
+import re
+import urllib
+import urlparse
 
-from PIL import Image
-import requests
 from bs4 import BeautifulSoup
+from PIL import Image
 import imagehash
+import requests
 
 __version__ = '0.1'
 # BeautifulSoup = functools.partial(bs4.BeautifulSoup, markup='html.parser')
@@ -15,12 +17,13 @@ __version__ = '0.1'
 class BaseScraper(object):
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers['User-Agent'] = ('Mozilla/5.0 (Macintosh; Intel '\
-            'Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) '\
+        self.session.headers['User-Agent'] = ('Mozilla/5.0 (Macintosh; Intel '
+            'Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) '
             'Chrome/56.0.2924.87 Safari/537.36')
 
-    def search(self):
-        resp = self.session.get(self.url)
+    def search(self, manufacturer, length):
+        url = self.url.format(manufacturer=manufacturer, length=length)
+        resp = self.session.get(url)
         return resp.content
 
     def _result_post_processing(self, result):
@@ -35,9 +38,8 @@ class BaseScraper(object):
         result['currency'] = currency
         return result
 
-    @staticmethod
-    def _make_image_hash(image_url):
-        resp = requests.get(image_url)
+    def _make_image_hash(self, image_url):
+        resp = self.session.get(image_url)
         if resp.status_code != 200:
             raise Exception('bad_image_url : {}'.format(image_url))
         f = io.BytesIO(resp.content)
@@ -94,14 +96,23 @@ class BaseScraper(object):
                 continue
             break
         else:
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             raise Exception('Could not parse currency type')
         return price, price_currency
 
 
 class ApolloDuckScraper(BaseScraper):
     _results_css_selector = '.FeatureAdPanel, .StandardAdPanel'
+    # TODO lookup IDs for manufacture and length
     url = 'https://www.apolloduck.com/boats.phtml?id=848&mi=2381'
+
+    def search_and_parse(self, manufacturer, length):
+        # Only works for contessa 32 now
+        if manufacturer.lower() == 'contessa' and float(length) == 32:
+            return super(CO32Scraper, self).search_and_parse(manufacturer,
+                                                             length)
+        else:
+            return []
 
     @staticmethod
     def _parse_result(r):
@@ -123,10 +134,10 @@ class ApolloDuckScraper(BaseScraper):
 class YachtWorldScraper(BaseScraper):
     _results_css_selector = '.searchResultDetailsContainer .listing'
     url = ("http://www.yachtworld.com/core/listing/cache/searchResults.jsp"
-          "?man=contessa&is=&type=&luom=126&fromLength=32&toLength=32&"
-          "fromYear=&toYear=&pricderange=Select+Price+Range&Ntt=&"
-          "fromPrice=0&toPrice=&searchtype=homepage&cit=true&slim=quick&"
-          "ybw=&sm=3&Ntk=boatsEN&currencyid=100&ps=50")
+          "?man={manufacturer}&is=&type=&luom=126&fromLength={length}&"
+          "toLength={length}&fromYear=&toYear=&pricderange=Select+Price+"
+          "Range&Ntt=&fromPrice=0&toPrice=&searchtype=homepage&cit=true&"
+          "slim=quick&ybw=&sm=3&Ntk=boatsEN&currencyid=100&ps=50")
 
     def _parse_result(self, r):
         p = {}
@@ -143,7 +154,8 @@ class YachtWorldScraper(BaseScraper):
 
 class Boatshop24Scraper(BaseScraper):
     _results_css_selector = '.latest_ads_list .ad-list.item'
-    url = ("http://www.boatshop24.co.uk/sailing?sstr=contessa%2032")
+    url = ("http://www.boatshop24.co.uk/sailing?sstr={manufacturer}%20"
+           "{length}")
 
     def _parse_result(self, r):
         p = {}
@@ -168,8 +180,8 @@ class Boatshop24Scraper(BaseScraper):
 class TheYachtMarketScraper(BaseScraper):
     _results_css_selector = '.search-results .result'
     url = ("http://www.theyachtmarket.com/boatsearchresults.aspx?"
-           "manufacturermodel=contessa&currency=gbp&lengthfrom=32&lengthto=32"
-           "&lengthunit=feet&saleorcharter=sale")
+           "manufacturermodel={manufacturer}&currency=gbp&lengthfrom={length}&"
+           "lengthto={length}&lengthunit=feet&saleorcharter=sale")
 
     def _parse_result(self, r):
         p = {}
@@ -185,9 +197,22 @@ class TheYachtMarketScraper(BaseScraper):
 
 class BoatShedScraper(BaseScraper):
     _results_css_selector = '#SearchResults li'
+    # NOTE: This query string is unorthodox. Length is a range given in
+    # centimeters in a homemade format, read the custom search method
     url = ("http://www.boatshed.com/dosearch.php?rank=-raw_gbp_price&"
-           "bq=%7B%22manufacturer%22%3A%5B%22Contessa%22%5D%2C%22"
-           "boatdetails_loa%22%3A%5B%22854..975%22%5D%7D")
+           "bq=%7B%22manufacturer%22%3A%5B%22{manufacturer}%22%5D%2C%22"
+           "{length}")
+
+    def search(self, manufacturer, length):
+        length = float(length)
+        min_length = int(math.floor(30.48 * length))
+        max_length = int(math.ceil(30.48 * length))
+        length_str = 'boatdetails_loa":["{}..{}"]}}'.format(min_length,
+                                                           max_length)
+        length_str = urllib.quote(length_str)
+        url = self.url.format(manufacturer=manufacturer, length=length_str)
+        resp = self.session.get(url)
+        return resp.content
 
     def _parse_result(self, r):
         p = {}
@@ -212,8 +237,9 @@ class BoatShedScraper(BaseScraper):
 
 class BoatsScraper(BaseScraper):
     _results_css_selector = '#search-results > div.boat-listings li'
-    url = ("http://www.boats.com/boats-for-sale/?make=contessa&"
-           "length-from=32&length-to=32&uom=ft&currency=usd")
+    url = ("http://www.boats.com/boats-for-sale/?make={manufacturer}&"
+           "length-from={length}&length-to={length}&uom=ft&"
+           "currency=usd")
 
     def _parse_result(self, r):
         p = {}
@@ -230,8 +256,8 @@ class BoatsScraper(BaseScraper):
 class ScanBoat(BaseScraper):
     _results_css_selector = 'div.pageContent a'
     url = ("https://www.scanboat.com/en/boats?SearchCriteria.BoatModelText="
-           "contessa+32&SearchCriteria.BoatTypeID=0&SearchCriteria.Searched="
-           "true&SearchCriteria.ExtendedSearch=False")
+           "{manufacturer}+{length}&SearchCriteria.BoatTypeID=0&"
+           "SearchCriteria.Searched=true&SearchCriteria.ExtendedSearch=False")
 
     def _parse_result(self, r):
         p = {}
@@ -253,6 +279,15 @@ class ScanBoat(BaseScraper):
 class CO32Scraper(BaseScraper):
     _results_css_selector = 'table tbody tr'
     url = 'http://www.co32.org/boats-for-sale'
+
+    def search_and_parse(self, manufacturer, length):
+        # This site is only for Contessa 32's, so no need to search if that's
+        # not what we are looking for
+        if manufacturer.lower() == 'contessa' and float(length) == 32:
+            return super(CO32Scraper, self).search_and_parse(manufacturer,
+                                                             length)
+        else:
+            return []
 
     def _parse_result(self, r):
         p = {}

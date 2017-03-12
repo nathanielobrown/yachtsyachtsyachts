@@ -1,0 +1,92 @@
+<!DOCTYPE>
+<html>
+<head>
+	<title>Yachts Yachts Yachts</title>
+	<link rel="stylesheet" href="https://unpkg.com/purecss@0.6.2/build/pure-min.css" integrity="sha384-UQiGfs9ICog+LwheBSRCt1o5cbyKIHbwjWscjemyBMT9YCUMZffs6UqUTd0hObXD" crossorigin="anonymous">
+	<style>
+		[class^='schooner'], [class*=' schooner'] {
+			fill: yellow;
+			/*transform: scale(.4);*/
+			font-size: 22px;
+		}
+		.schooner_1 {
+			fill: blue;
+			color: blue;
+		}
+		.schooner_2 {
+			fill: black;
+			color: black;
+		    margin: 0px 14px;
+		}
+		.schooner_3 {
+			fill: turquoise;
+			color: turquoise;
+		}
+		#page_name {
+			padding-left: 30px;
+		}
+		#schooners_svg {
+			width: 250px;
+			height: 50px;
+		}
+		#dot_com {
+			font-size: 12px;
+		}
+		header {
+			padding: 40px 0px 60px;
+		}
+		header, main {
+			text-align: center;
+		    max-width: 900px;
+		    margin-left: auto;
+		    margin-right: auto;
+		}
+		p {
+			text-align: left;
+			font-size: 1.2em;
+			line-height: 1.5em;
+			text-indent: 30px;
+		}
+		input, button {
+			height: 40px;
+			font-size: 18px;
+		}
+		input[name='manufacturer'] {
+			width: 250px;;
+		}
+		input[name='length'] {
+			width: 110px;;
+		}
+
+	</style>
+	{% block head %}{% endblock head %}
+</head>
+<body>
+	<header>
+		<svg version="1.1" id="schooners_svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+			 viewBox="0 0 2000 430" xml:space="preserve">
+			{% include "schooner_svg_definition.svg" %}
+			<use class="schooner_1" y="-180" x="0" xlink:href="#schooner"/>
+			<use class="schooner_2" y="-180" x="700" xlink:href="#schooner"/>
+			<use class="schooner_3" y="-180" x="1400" xlink:href="#schooner"/>
+		</svg>
+		<br>
+		<span id="page_name">
+			<span class="schooner_1">Yachts</span>
+			<span class="schooner_2">Yachts</span>
+			<span class="schooner_3">Yachts</span>
+			<span id="dot_com">.com</span>
+		</span>
+	</header>
+	<main>
+		<form name="search" method="GET" action="/search/" class="pure-form">
+			<input name="manufacturer" value="{{ request.args.get('manufacturer') }}" placeholder="Manufacturer/Builder" style="vertical-align:bottom">
+			<input name="length" value="{{ request.args.get('length') }}" type="number" placeholder="Length">
+			<button type="submit" value="Search" class="pure-button">Search</button>
+		</form>
+		{% block main %}
+		{% endblock main %}
+	</main>
+{% block scripts %}{% endblock scripts %}
+</body>
+</html>
