@@ -1,6 +1,7 @@
 import time
 import pprint
 import urlparse
+import os
 
 from celery import Celery
 from flask_cache import Cache
@@ -12,7 +13,10 @@ import scrapers
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-celery = Celery('app', broker='pyamqp://guest@localhost:5672',
+broker_host = os.environ.get('BROKER_NAME', 'localhost')
+broker_str = 'pyamqp://guest@{}:5672'.format(broker_host)
+print 'BROKER: ', broker_str
+celery = Celery('app', broker=broker_str,
                 backend='rpc://')
 cache = Cache(app, config={'CACHE_TYPE': 'filesystem',
                            'CACHE_DIR': 'cache'})
@@ -22,6 +26,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'filesystem',
 def domain_name(s):
     """Takes a URL and returns the domain portion"""
     return urlparse.urlparse(s).netloc
+
 
 @celery.task
 def run_search(scraper_name, manufacturer, length):

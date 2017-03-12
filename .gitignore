@@ -5,3 +5,4 @@ images/
 cache/
 .noseids
 *.sublime*
+scripts/one_click.sh

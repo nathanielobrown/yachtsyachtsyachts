@@ -17,7 +17,7 @@
 {% endblock head %}
 {% block main %}
 
-<span>Found {{ results|length }} boats in {{ '{:.1f}'.format(elapsed_time) }} seconds{% if cached %} (cached){% endif %}.</span><br>
+<span>Found {{ grouped_results|length }} boats in {{ '{:.1f}'.format(elapsed_time) }} seconds{% if cached %} (cached){% endif %}.</span><br>
 
 <table id="results" class="pure-table">
 <thead>
@@ -37,17 +37,10 @@
 		<td>
 				<img src="{{ result['image_url'] }}">
 		</td>
-		<td>
-				{{ result['title'] }}</td>
-		<td>
-				{{ result['year'] }}
-		</td>
-		<td>
-				{{ result['location']}}
-		</td>
-		<td>
-				{{ result['price'] }}
-		</td>
+		<td>{{ result['title'] }}</td>
+		<td>{{ result['year'] }}</td>
+		<td>{{ result['location']}}</td>
+		<td>{{ result['price'] }}</td>
 		<td>
 			<ul>
 			{% for result in result_group %}

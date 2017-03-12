@@ -1,0 +1,5 @@
+images/
+cache/
+*.sublime*
+*.csv
+*.pyc

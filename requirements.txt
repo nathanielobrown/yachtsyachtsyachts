@@ -1,0 +1,9 @@
+beautifulsoup4
+celery
+flask
+flask_cache
+imagehash
+lxml
+pillow
+requests
+uwsgi
