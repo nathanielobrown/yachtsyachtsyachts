@@ -3,16 +3,22 @@
 	<style>
 		#site_description {
 			margin-top: 45px;
-			max-width: 540px;
-			margin-left: auto;
-			margin-right: auto;
 		}
 		#site_description strong {
 			color: blue;
+		}
+		.warning {
+			color: red;
+		}
+		p {
+			max-width: 540px;
+			margin-left: auto;
+			margin-right: auto;
 		}
 
 	</style>
 {% endblock head %}
 {% block main %}
 		<p id="site_description">YachtsYactsYachts.com searches <strong>{{ num_scrapers }} boat listing sites</strong> so you only have to search <strong title="yachtsyachtsyachts.com :)">one</strong>. It groups boats listed on multiple sites together, so your results have <strong title="This is done using the year of manufacture and a technology called image hashing">no duplicates.</strong></p>
+		<p><span class="warning">WARNING:</span> This site is extremely <span class="warning">alpha</span>. It works for the few searches that were my inspiration, but otherwise Your Mileage May Vary. If you would like an issue fixed or have a suggestion, please <a href="mailto:nathanielobrown@gmail.com">contact me.</a></p>
 {% endblock main %}
