@@ -109,7 +109,7 @@ class ApolloDuckScraper(BaseScraper):
     def search_and_parse(self, manufacturer, length):
         # Only works for contessa 32 now
         if manufacturer.lower() == 'contessa' and float(length) == 32:
-            return super(CO32Scraper, self).search_and_parse(manufacturer,
+            return super(ApolloDuckScraper, self).search_and_parse(manufacturer,
                                                              length)
         else:
             return []
