@@ -73,6 +73,9 @@ def search():
         key = (result['image_hash'], result['year'])
         grouped_results[key] = grouped_results.get(key, []) + [result]
     elapsed_time = time.time() - t_start
+    grouped_results = grouped_results.values()
+    grouped_results.sort(key=lambda x: x[0].get('parsed_price', 0),
+                         reverse=True)
     return render_template('results.html', grouped_results=grouped_results,
                            elapsed_time=elapsed_time, cached=g.cached)
 

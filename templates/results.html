@@ -27,11 +27,13 @@
 		<th>Year</th>
 		<th>Location</th>
 		<th>Price</th>
+		<th>Parsed Price</th>
+		<th>Currency</th>
 		<th>Links</th>
 	</tr>
 </thead>
 <tbody>
-{% for result_group in grouped_results.itervalues() %}
+{% for result_group in grouped_results %}
 	{% set result = result_group[0] %}
 	<tr>
 		<td>
@@ -41,6 +43,12 @@
 		<td>{{ result['year'] }}</td>
 		<td>{{ result['location']}}</td>
 		<td>{{ result['price'] }}</td>
+		<td>
+			{% if 'parsed_price' in result %}
+				{{ "{:,.0f}".format(result['parsed_price']) }}
+			{% endif %}
+		</td>
+		<td>{{ result['currency'] }}</td>
 		<td>
 			<ul>
 			{% for result in result_group %}
