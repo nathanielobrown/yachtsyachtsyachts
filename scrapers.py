@@ -4,6 +4,7 @@ import math
 import re
 import urllib
 import urlparse
+import uuid
 
 from bs4 import BeautifulSoup
 from PIL import Image
@@ -27,15 +28,19 @@ class BaseScraper(object):
         return resp.content
 
     def _result_post_processing(self, result):
-        if 'image_url' in result:
+        if 'image_url' in result and result['image_url']:
             result['image_url'] = self.process_url(result['image_url'])
             result['image_hash'] = self._make_image_hash(result['image_url'])
+        else:
+            result['image_url'] = None
+            result['image_hash'] = uuid.uuid1().hex
         result['link'] = self.process_url(result['link'])
         result['year'] = int(result['year'])
         result['title'] = self.clean_whitespace(result['title'])
-        price, currency = self.parse_price(result['price'])
-        result['parsed_price'] = price
-        result['currency'] = currency
+        if 'price' in result and result['price']:
+            price, currency = self.parse_price(result['price'])
+            result['parsed_price'] = price
+            result['currency'] = currency
         return result
 
     def _make_image_hash(self, image_url):
@@ -300,6 +305,33 @@ class CO32Scraper(BaseScraper):
         p['title'] = u'Contessa 32, {}'.format(p['name'])
         return p
 
+
+class SailBoatListingsScraper(BaseScraper):
+    _results_css_selector = 'table[width="100%"] table[cellspacing="1"]'
+    url = ('http://www.sailboatlistings.com/cgi-bin/saildata/db.cgi?db='
+           'default&uid=default&sb=33&so=descend&websearch=1&'
+           'manufacturer={manufacturer}&model=&length-gt={length}&'
+           'length-lt={length}&year-lt=---&year-gt=---&price-lt=&type=---&'
+           'material=---&hull=---&state=&view_records=+Show+Matching+Boats+')
+
+    def _parse_result(self, r):
+        p = {}
+        image_tag = r.find('img')
+        if image_tag:
+            p['image_url'] = image_tag.attrs['src']
+        else:
+            p['image_url'] = None
+        p['link'] = r.find('a').attrs['href']
+        p['title'] = r.find(class_='sailheader').text.strip()
+        labels = r(class_='sailvb')
+        for label in labels:
+            label_text = label.text.strip().rstrip(':').lower()
+            label_value = label.findNext(class_='sailvk').text.strip()
+            p[label_text] = label_value
+        p['price'] = p.pop('asking', None)
+        assert 'year' in p
+        assert 'location' in p
+        return p
 
 all_scrapers = {name: Scraper for name, Scraper in locals().iteritems()
             if isinstance(Scraper, type) and
