@@ -8,6 +8,7 @@ from flask_cache import Cache
 from flask import Flask, render_template, request, g
 
 import scrapers
+from forex_python.converter import CurrencyRates
 
 
 app = Flask(__name__)
@@ -55,6 +56,14 @@ def search_all(manufacturer, length):
     return results
 
 
+@cache.memoize(timeout=86400)
+def get_exchange_rate(currency1, currency2):
+    if currency1 == currency2:
+        return 1
+    c = CurrencyRates()
+    return c.get_rate(currency1, currency2)
+
+
 @app.route('/')
 def home():
     num_scrapers = len(scrapers.all_scrapers)
@@ -68,9 +77,14 @@ def search():
     manufacturer = request.args['manufacturer'].strip()
     length = request.args['length'].strip()
     results = search_all(manufacturer, length)
+    for result in results:
+        if 'currency' not in result:
+            continue
+        exchange_rate = get_exchange_rate(result['currency'], 'USD')
+        result['parsed_price'] = result['parsed_price'] * exchange_rate
     grouped_results = {}
     for result in results:
-        key = (result['image_hash'], result['year'])
+        key = (result['image_hash'], result.get('year', 0))
         grouped_results[key] = grouped_results.get(key, []) + [result]
     elapsed_time = time.time() - t_start
     grouped_results = grouped_results.values()

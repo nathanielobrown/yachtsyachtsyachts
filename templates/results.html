@@ -28,7 +28,7 @@
 		<th>Location</th>
 		<th>Price</th>
 		<th>Parsed Price</th>
-		<th>Currency</th>
+		<!-- <th>Currency</th> -->
 		<th>Links</th>
 	</tr>
 </thead>
@@ -45,10 +45,10 @@
 		<td>{{ result['price'] }}</td>
 		<td>
 			{% if 'parsed_price' in result %}
-				{{ "{:,.0f}".format(result['parsed_price']) }}
+				${{ "{:,.0f}".format(result['parsed_price']) }}
 			{% endif %}
 		</td>
-		<td>{{ result['currency'] }}</td>
+		<!-- <td>{{ result['currency'] }}</td> -->
 		<td>
 			<ul>
 			{% for result in result_group %}

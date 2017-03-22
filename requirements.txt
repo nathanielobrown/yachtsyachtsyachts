@@ -2,6 +2,7 @@ beautifulsoup4
 celery
 flask
 flask_cache
+forex_python
 imagehash
 lxml
 pillow
