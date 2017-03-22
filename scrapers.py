@@ -35,7 +35,8 @@ class BaseScraper(object):
             result['image_url'] = None
             result['image_hash'] = uuid.uuid1().hex
         result['link'] = self.process_url(result['link'])
-        result['year'] = int(result['year'])
+        if 'year' in result and result['year']:
+            result['year'] = int(result['year'])
         result['title'] = self.clean_whitespace(result['title'])
         if 'price' in result and result['price']:
             price, currency = self.parse_price(result['price'])
@@ -55,6 +56,7 @@ class BaseScraper(object):
         soup = BeautifulSoup(html, 'lxml')
         results = soup.select(self._results_css_selector)
         parsed_results = map(self._parse_result, results)
+        parsed_results = [r for r in parsed_results if r]
         processed_results = map(self._result_post_processing, parsed_results)
         return processed_results
 
@@ -173,7 +175,10 @@ class Boatshop24Scraper(BaseScraper):
             label_text = label.text.strip().rstrip(':').lower()
             label_value = label.findNext('td').text.strip()
             p[label_text] = label_value
-        p['year'] = int(p.pop('year built'))
+        try:
+            p['year'] = int(p.pop('year built'))
+        except ValueError:
+            p['year'] = None
         resp = requests.get(p['link'])
         assert resp.status_code == 200
         soup = BeautifulSoup(resp.content, 'lxml')
@@ -321,16 +326,22 @@ class SailBoatListingsScraper(BaseScraper):
             p['image_url'] = image_tag.attrs['src']
         else:
             p['image_url'] = None
-        p['link'] = r.find('a').attrs['href']
-        p['title'] = r.find(class_='sailheader').text.strip()
+        a_tag = r.find('a')
+        if not a_tag:
+            return None
+        p['link'] = a_tag.attrs['href']
+        tag = r.find(class_='sailheader')
+        if not tag:
+            return None
+        p['title'] = tag.text.strip()
         labels = r(class_='sailvb')
         for label in labels:
             label_text = label.text.strip().rstrip(':').lower()
             label_value = label.findNext(class_='sailvk').text.strip()
             p[label_text] = label_value
         p['price'] = p.pop('asking', None)
-        assert 'year' in p
-        assert 'location' in p
+        # assert 'year' in p
+        # assert 'location' in p
         return p
 
 all_scrapers = {name: Scraper for name, Scraper in locals().iteritems()

@@ -61,11 +61,23 @@
 		input[name='length'] {
 			width: 110px;;
 		}
+		table#results {
+			font-size: .8em;
+		    margin-left: auto;
+		    margin-right: auto;
+		}
+		#results img {
+		    max-width: 120px;
+		    max-height: 120px;
+		}
+		#results a {
+			text-decoration: none;
+		}
 
 	</style>
 	{% block head %}{% endblock head %}
 </head>
-<body>
+<body style="display: none">
 	<header>
 		<a href="/">
 			<svg version="1.1" id="schooners_svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -86,13 +98,39 @@
 	</header>
 	<main>
 		<form name="search" method="GET" action="/search/" class="pure-form">
-			<input name="manufacturer" value="{{ request.args.get('manufacturer', '') }}" placeholder="Manufacturer/Builder" style="vertical-align:bottom">
-			<input name="length" value="{{ request.args.get('length', '') }}" type="number" placeholder="Length">
-			<button type="submit" value="Search" class="pure-button">Search</button>
+			<input name="manufacturer" v-model="manufacturer" placeholder="Manufacturer/Builder" style="vertical-align:bottom">
+			<input name="length" v-model="length" type="number" placeholder="Length">
+			<button v-on:click.prevent="search()" type="submit" value="Search" class="pure-button">Search</button>
 		</form>
-		{% block main %}
-		{% endblock main %}
+		<p v-if="task_ids.length > 0">Searching... ({- task_ids.length -} site<span v-if="task_ids.length!=1">s</span> to go)</p>
+		<table id="results" class="pure-table" v-if="Object.keys(result_groups).length > 0">
+		<thead>
+			<tr>
+				<th></th>
+				<th>Title</th>
+				<th>Year</th>
+				<th>Location</th>
+				<th>Price</th>
+				<th>Parsed Price (USD)</th>
+				<!-- <th>Currency</th> -->
+				<th>Links</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr is="result-group" v-for="group in sorted_result_groups" v-bind:results="group"></tr>
+		</tbody>
+		</table>
+		<div v-if="!has_searched">
+			<p id="site_description">YachtsYactsYachts.com searches <strong>{{ num_scrapers }} boat listing sites</strong> so you only have to search <strong title="yachtsyachtsyachts.com :)">one</strong>. It groups boats listed on multiple sites together, so your results have <strong title="This is done using the year of manufacture and a technology called image hashing">no duplicates.</strong></p>
+			<p><span class="warning">WARNING:</span> This site is extremely <span class="warning">alpha</span>. It works for the few searches that were my inspiration, but otherwise Your Mileage May Vary. If you would like an issue fixed or have a suggestion, please <a href="mailto:nathanielobrown@gmail.com">contact me.</a></p>
+		</div>
 	</main>
 {% block scripts %}{% endblock scripts %}
+<script src="https://unpkg.com/vue"></script>
+<script
+  src="https://code.jquery.com/jquery-2.2.4.min.js"
+  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+  crossorigin="anonymous"></script>
+<script src="/static/js/base.js"></script>
 </body>
 </html>
