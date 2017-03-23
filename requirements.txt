@@ -1,5 +1,5 @@
 beautifulsoup4
-celery
+celery[redis]
 flask
 flask_cache
 forex_python

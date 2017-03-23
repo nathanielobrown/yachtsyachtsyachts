@@ -5,7 +5,7 @@ import os
 
 from celery import Celery
 from flask_cache import Cache
-from flask import Flask, render_template, request, g, jsonify
+from flask import Flask, render_template, request, jsonify
 
 import scrapers
 from forex_python.converter import CurrencyRates
@@ -15,10 +15,16 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 broker_host = os.environ.get('BROKER_NAME', 'localhost')
+backend_host = os.environ.get('BACKEND_NAME')
 broker_str = 'pyamqp://guest@{}:5672'.format(broker_host)
+if backend_host:
+    backend_str = 'redis://{}:6379'.format(backend_host)
+else:
+    backend_str = 'rpc://'
 print 'BROKER: ', broker_str
+print 'BACKEND: ', backend_str
 celery = Celery('app', broker=broker_str,
-                backend='rpc://')
+                backend=backend_str)
 cache = Cache(app, config={'CACHE_TYPE': 'filesystem',
                            'CACHE_DIR': 'cache'})
 
