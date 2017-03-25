@@ -23,6 +23,7 @@ class BaseScraper(object):
     def search(self, manufacturer, length):
         url = self.url.format(manufacturer=manufacturer, length=length)
         resp = self.session.get(url)
+        assert resp.status_code == 200
         return resp.content
 
     def _result_post_processing(self, result):
