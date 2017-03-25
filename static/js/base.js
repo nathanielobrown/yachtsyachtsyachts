@@ -1,31 +1,4 @@
-// $(document).ready(function(){
-// 	$('button[value="Search"]').on('click', function(e){
-// 		results = [];
-// 		e.preventDefault();
-// 		var $form = $('form');
-// 		var url = $form.prop('action') + '?' + $form.serialize();
-// 		console.log(url);
-// 		$.getJSON(url, function(resp){
-// 			var task_ids = resp.task_ids;
-// 			console.log(resp);
-// 			get_result(task_ids);
-// 		});
-// 	});
-// });
 
-function get_result(task_ids){
-	if(task_ids.length === 0){
-		return
-	}
-	var $promise = $.ajax({
-		url: '/search/results/',
-		contentType: 'application/json',
-		data: JSON.stringify({task_ids:task_ids}),
-		method: 'POST'
-	});
-	$promise.success(function(resp){ console.log(resp)});
-	$promise.error(function(resp){debugger});
-}
 function getParameterByName(name, url) {
     if (!url) {
       url = window.location.href;
