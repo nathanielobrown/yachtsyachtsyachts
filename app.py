@@ -3,9 +3,12 @@ import pprint
 import urlparse
 import os
 
-from celery import Celery
+import celery
 from flask_cache import Cache
 from flask import Flask, render_template, request, jsonify
+import raven
+from raven.contrib.flask import Sentry
+from raven.contrib.celery import register_signal, register_logger_signal
 
 import scrapers
 from forex_python.converter import CurrencyRates
@@ -17,16 +20,33 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 broker_host = os.environ.get('BROKER_NAME', 'localhost')
 backend_host = os.environ.get('BACKEND_NAME')
 broker_str = 'pyamqp://guest@{}:5672'.format(broker_host)
+sentry_dsn = 'https://a89cf42846224019b1a72f7c56aa2f6a:13a3e6fd' \
+             '0da94e278060355bb60bb933@sentry.io/151954'
 if backend_host:
     backend_str = 'redis://{}:6379'.format(backend_host)
 else:
     backend_str = 'rpc://'
 print 'BROKER: ', broker_str
 print 'BACKEND: ', backend_str
+
+
+class Celery(celery.Celery):
+
+    def on_configure(self):
+        client = raven.Client(sentry_dsn)
+
+        # register a custom filter to filter out duplicate logs
+        register_logger_signal(client)
+
+        # hook into the Celery error handler
+        register_signal(client)
+
+
 celery = Celery('app', broker=broker_str,
                 backend=backend_str)
 cache = Cache(app, config={'CACHE_TYPE': 'filesystem',
                            'CACHE_DIR': 'cache'})
+sentry = Sentry(app, dsn=sentry_dsn)
 
 
 @app.template_filter('domain_name')
@@ -99,6 +119,10 @@ def home():
     num_scrapers = len(scrapers.all_scrapers)
     return render_template('home.html', num_scrapers=num_scrapers)
 
+
+@app.route('/error')
+def error():
+    return 1 / 0
 
 @app.route('/search/')
 def search():

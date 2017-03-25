@@ -6,5 +6,6 @@ forex_python
 imagehash
 lxml
 pillow
+raven[flask]
 requests
 uwsgi
