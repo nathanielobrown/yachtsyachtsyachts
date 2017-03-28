@@ -34,7 +34,7 @@ Vue.component('result-group', {
 	template: `
 	<tr>
 		<td>
-			<img v-bind:src="result['image_url']">
+			<img v-bind:src="result['image_url']" v-bind:title="result['image_hash']">
 		</td>
 		<td>{- result.title -}</td>
 		<td>{- result['year'] -}</td>
@@ -43,6 +43,7 @@ Vue.component('result-group', {
 		<td>\${- result.parsed_price|price -}</td>
 		<!-- <td>{- result['currency'] -}</td> -->
 		<td>
+			<strong>View on:</strong>
 			<ul>
 				<li v-for="result in results">
 					<a v-bind:href="result.link">{- result.link|domain_name -}</a>
@@ -76,7 +77,12 @@ var search = new Vue({
 	},
 	computed: {
 		sorted_result_groups: function() {
-			var groups = Object.values(this.result_groups);
+			var groups = [];
+			for(key in this.result_groups){
+				if(this.result_groups.hasOwnProperty(key)){
+					groups.push(this.result_groups[key]);
+				}
+			}
 			return groups.sort(function(a, b){
 				return b[0].parsed_price - a[0].parsed_price;
 			});
