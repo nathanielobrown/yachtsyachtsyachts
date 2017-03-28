@@ -35,7 +35,7 @@ docker run -d --restart always \
 	-e BROKER_NAME=$BROKER_NAME \
 	-e BACKEND_NAME=$BACKEND_NAME \
 	boat_search \
-	celery -A app.celery worker --loglevel=info --concurrency 8
+	celery -A app.celery worker --loglevel=info --concurrency 12
 
 # Start app server
 APP_NAME=boat_search
