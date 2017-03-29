@@ -70,14 +70,16 @@ Vue.component('search-status', {
 				case 'STARTED':
 					return `${self.domain} is being searched.`
 				case 'SUCCESS':
-					if(this.num_results == 0){
-						return 'No results found'
-					}else{
-						return `Found ${this.num_results} results.`;
+					switch(this.num_results){
+						case 0:
+							return 'No results found.'
+						case 1:
+							return 'Found 1 result.'
+						default:
+							return `Found ${this.num_results} results.`
 					}
 				case 'FAILURE':
-					return `Something went wrong while searching ${self.domain}.
-					        This error has been reported.`
+					return `Something went wrong. This error has been reported.`
 			}
 		}
 	},
