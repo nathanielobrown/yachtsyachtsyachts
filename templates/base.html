@@ -79,7 +79,42 @@
 		#results thead th {
 		    font-size: 1.2em;
 		}
-
+		#search_status_holder{
+			text-align: left;
+		    position: absolute;
+		    right: 0px;
+		    top: 175px;
+		    width: 200px;
+		    font-size: 13px;
+		}
+		#search_status_holder h4{
+			font-size: 16px;
+		    margin: 0px 0px 10px;
+		}
+		.search_status{
+		    margin: 4px;
+		}
+		.search_status_dot{
+			width: 16px;
+			height: 16px;
+			border-radius: 8px;
+			display: inline-block;
+			text-align: center;
+		}
+		.search_status_dot.PENDING{
+			background-color: grey;
+		}
+		.search_status_dot.STARTED{
+			background-color: yellow;
+		}
+		.search_status_dot.SUCCESS{
+			background-color: green;
+		    box-shadow: 0px 0px 3px 1px rgba(0, 128, 0, 0.45);
+		}
+		.search_status_dot.FAILURE{
+			background-color: red;
+		    box-shadow: 0px 0px 3px 1px rgba(128, 0, 0, 0.45);
+		}
 	</style>
 	{% block head %}{% endblock head %}
 </head>
@@ -130,6 +165,13 @@
 		<div v-if="!has_searched">
 			<p id="site_description">YachtsYactsYachts.com searches <strong>{{ num_scrapers }} boat listing sites</strong> so you only have to search <strong title="yachtsyachtsyachts.com :)">one</strong>. It groups boats listed on multiple sites together, so your results have <strong title="This is done using the year of manufacture and a technology called image hashing">no duplicates.</strong></p>
 			<p><span class="warning">WARNING:</span> This site is extremely <span class="warning">alpha</span>. It works for the few searches that were my inspiration, but otherwise Your Mileage May Vary. If you would like an issue fixed or have a suggestion, please <a href="mailto:nathanielobrown@gmail.com">contact me.</a></p>
+		</div>
+		<div id="search_status_holder" v-if="has_searched">
+			<h4>Searching:</h4>
+			<search-status v-for="search in searches"
+			               v-bind:status="search.status"
+			               v-bind:domain="search.domain"
+			               v-bind:num_results="search.num_results"></search-status>
 		</div>
 	</main>
 {% block scripts %}{% endblock scripts %}

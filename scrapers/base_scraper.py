@@ -67,9 +67,15 @@ class BaseScraper(object):
     def clean_whitespace(s):
         return re.sub('\s+', ' ', s).strip()
 
-    def base_url(self):
-        parsed_url = urlparse.urlparse(self.url)
+    @classmethod
+    def base_url(cls):
+        parsed_url = urlparse.urlparse(cls.url)
         return '{}://{}'.format(parsed_url.scheme, parsed_url.netloc)
+
+    @classmethod
+    def domain(cls):
+        parsed_url = urlparse.urlparse(cls.url)
+        return parsed_url.netloc
 
     def process_url(self, url):
         url = url.strip()

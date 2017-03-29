@@ -1,24 +1,25 @@
-import time
-import pprint
-import urlparse
+import json
 import os
+import pprint
+import time
+import urlparse
 
-import celery
-from flask_cache import Cache
 from flask import Flask, render_template, request, jsonify
-import raven
-from raven.contrib.flask import Sentry
+from flask_cache import Cache
 from raven.contrib.celery import register_signal, register_logger_signal
+from raven.contrib.flask import Sentry
+import celery
+import raven
 
-import scrapers
 from forex_python.converter import CurrencyRates
+import scrapers
 
 
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 broker_host = os.environ.get('BROKER_NAME', 'localhost')
-backend_host = os.environ.get('BACKEND_NAME')
+backend_host = os.environ.get('BACKEND_NAME', 'localhost')
 broker_str = 'pyamqp://guest@{}:5672'.format(broker_host)
 sentry_dsn = 'https://a89cf42846224019b1a72f7c56aa2f6a:13a3e6fd' \
              '0da94e278060355bb60bb933@sentry.io/151954'
@@ -44,9 +45,11 @@ class Celery(celery.Celery):
 
 celery = Celery('app', broker=broker_str,
                 backend=backend_str)
+celery.conf['task_track_started'] = True
+
 cache = Cache(app, config={'CACHE_TYPE': 'filesystem',
                            'CACHE_DIR': 'cache'})
-sentry = Sentry(app, dsn=sentry_dsn)
+# sentry = Sentry(app, dsn=sentry_dsn)
 
 
 @app.template_filter('domain_name')
@@ -77,40 +80,93 @@ def search_task(scraper_name, manufacturer, length):
 
 
 def search_all(manufacturer, length):
-    async_results = []
-    for scraper_name in scrapers.all_scrapers.iterkeys():
-        async_result = search_task.delay(scraper_name, manufacturer, length)
-        async_results.append(async_result)
-    return [a.task_id for a in async_results]
+    tasks = []
+    for scraper_name, scraper in scrapers.all_scrapers.iteritems():
+        args = (scraper_name, manufacturer, length)
+        kwargs = {}
+        async_result = search_task.apply_async(args=args, kwargs=kwargs)
+        task = {
+            "task_id": async_result.task_id,
+            "status": "PENDING",
+            "num_results": 0,
+            "results": [],
+            "note": None,
+            "args": args,
+            "kwargs": kwargs,
+            "domain": scraper.domain()
+        }
+        tasks.append(task)
+    return tasks
 
 
-def get_all_results(task_ids):
-    async_results = [search_task.AsyncResult(id) for id in task_ids]
-    results = []
-    timeout = time.time() + 30  # 10 second timeout
-    for async_result in async_results:
-        time_left = timeout - time.time()
-        try:
-            result = async_result.get(timeout=time_left)
-        except Exception as e:
-            print 'Exception for scraper:\n{}'.format(str(e))
-            continue
-            # import ipdb; ipdb.set_trace()
-        results.extend(result)
-    return results
+# def get_all_results(task_ids):
+#     async_results = [search_task.AsyncResult(id) for id in task_ids]
+#     results = []
+#     timeout = time.time() + 30  # 10 second timeout
+#     for async_result in async_results:
+#         time_left = timeout - time.time()
+#         try:
+#             result = async_result.get(timeout=time_left)
+#         except Exception as e:
+#             print 'Exception for scraper:\n{}'.format(str(e))
+#             continue
+#             # import ipdb; ipdb.set_trace()
+#         results.extend(result)
+#     return results
+
+class SearchTaskWrapper(object):
+    def __init__(self, task):
+        """task an either be a task_id or a task"""
+        if isinstance(task, basestring):
+            self.task_id = task
+        else:
+            import ipdb; ipdb.set_trace()
+        self.async_result = search_task.AsyncResult(self.task_id)
+        self.results = []
+        self.note = None
+
+    def __iter__(self):
+        yield ("task_id", self.task_id)
+        yield ("status", self.async_result.status)
+        yield ("results", self.results)
+        yield ("num_results", len(self.results))
+        yield ("note", self.note)
+
+    @property
+    def status(self):
+        return self.async_result.status
+
+    def ready(self):
+        return self.async_result.ready()
+
+    def update_results(self):
+        if not self.async_result.failed():
+            self.results = self.async_result.get(timeout=2)
 
 
-def get_single_site_results(task_ids):
-    async_results = {search_task.AsyncResult(id) for id in task_ids}
-    timeout = time.time() + 20
+def get_some_site_results(task_ids, min_wait=1, max_wait=20):
+    """Wait until we find either a success or a failure, then return the
+    dictionary versions of all the task_wrappers, plus task_ids to be polled
+    for future udpates"""
+    task_ids = set(task_ids)
+    timeout = time.time() + max_wait
+    min_time = time.time() + min_wait
+    task_wrappers = [SearchTaskWrapper(task_id) for task_id in task_ids]
+    new_results = False
     while time.time() < timeout:
-        for async_result in async_results:
-            if async_result.ready():
-                task_ids.remove(async_result.task_id)
-                if async_result.failed():
-                    return [], list(task_ids)
-                else:
-                    return async_result.get(timeout=2), list(task_ids)
+        for task_wrapper in task_wrappers:
+            print task_wrapper.status
+            # Skip tasks that we've already resolved
+            if task_wrapper.task_id not in task_ids:
+                continue
+            if task_wrapper.ready():
+                new_results = True
+                task_ids.remove(task_wrapper.task_id)
+                task_wrapper.update_results()
+        # Return if we've waited long enough and found some results
+        if new_results and time.time() > min_time:
+            return map(dict, task_wrappers), list(task_ids)
+        time.sleep(.5)
     raise Exception('Get Result timed out')
 
 
@@ -124,13 +180,14 @@ def home():
 def error():
     return 1 / 0
 
+
 @app.route('/search/')
 def search():
     if request.is_xhr:
         manufacturer = request.args['manufacturer'].strip()
         length = request.args['length'].strip()
-        task_ids = search_all(manufacturer, length)
-        return jsonify(task_ids=task_ids)
+        searches = search_all(manufacturer, length)
+        return jsonify(searches=searches)
     else:
         return render_template('home.html')
 
@@ -138,8 +195,8 @@ def search():
 @app.route('/search/results/', methods=['POST'])
 def search_results():
     task_ids = request.get_json()['task_ids']
-    results, remaining_task_ids = get_single_site_results(task_ids)
-    return jsonify(results=results, task_ids=remaining_task_ids)
+    searches, remaining_task_ids = get_some_site_results(task_ids, min_wait=0)
+    return jsonify(searches=searches, task_ids=remaining_task_ids)
 
 
 @app.route('/search_raw/')

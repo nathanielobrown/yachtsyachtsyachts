@@ -1,4 +1,10 @@
 
+function SearchTask(search_data) {
+	$.extend(this, search_data);
+}
+SearchTask.prototype.test = function(){
+	console.log('I extended someting with SearchTask');
+}
 function getParameterByName(name, url) {
     if (!url) {
       url = window.location.href;
@@ -54,6 +60,28 @@ Vue.component('result-group', {
 
 });
 
+Vue.component('search-status', {
+	props: ['status', 'note', 'num_results', 'domain'],
+	computed:{
+		title: function(){
+			if(this.status == 'SUCCESS'){
+				return `${this.status} (${this.num_results} results)`;
+			}else{
+				return this.status;
+			}
+		}
+	},
+	template: `
+	<div v-bind:title="title" class="search_status">
+		<div class="search_status_dot" v-bind:class="status">
+			<template v-if="status=='FAILURE'">X</template>
+			<template v-else-if="status=='SUCCESS'">{{ num_results }}</template>
+		</div>
+		{{ domain }}
+	</div>
+	`
+})
+
 var search = new Vue({
 	el: 'main',
 	delimiters: ['{-', '-}'],
@@ -62,6 +90,7 @@ var search = new Vue({
 		length: "",
 		result_groups: {},
 		task_ids: [],
+		searches: {},
 		has_searched: false
 	},
 	created: function(){
@@ -97,21 +126,25 @@ var search = new Vue({
 			history.pushState({}, "", "/search/?"+qs);
 		},
 		search: function() {
-			this.$data.result_groups = {};
-			this.$data.has_searched = true;
+			this.result_groups = {};
+			this.searches = {};
+			this.has_searched = true;
 			this.update_url();
 			var qs = $.param({
-				manufacturer:this.$data.manufacturer,
-				length:this.$data.length
+				manufacturer:this.manufacturer,
+				length:this.length
 			});
 			var url = '/search/?' + qs;
 			console.log(url);
 			var $promise = $.getJSON(url);
 			$promise.success(function(resp){
-				this.$data.task_ids = resp.task_ids;
+				for(var i in resp.searches){
+					var search = new SearchTask(resp.searches[i]);
+					this.$set(this.$data.searches, search.task_id, search);
+					this.$data.task_ids.push(search.task_id);
+				}
 				this.get_results(0);
-			}.bind(this))
-			;
+			}.bind(this));
 		},
 		get_results: function(errors) {
 			if(this.$data.task_ids.length === 0){
@@ -129,26 +162,38 @@ var search = new Vue({
 				method: 'POST'
 			});
 			$promise.success(function(resp){
-				for(var i in resp.results){
-					var year = resp.results[i].year
-					if(typeof year  === "undefined"){
-						// Random integer, so that we don't group all the
-						// results with no year together
-						year = Math.random().toString().slice(2);
-					}
-					var key = year + '_' + resp.results[i].image_hash;
-					if(this.$data.result_groups.hasOwnProperty(key)){
-						this.$data.result_groups[key].push(resp.results[i]);
-					}else{
-						this.$set(this.result_groups, key, [resp.results[i]]);
+				for(var i in resp.searches){
+					var search = resp.searches[i];
+					// update search
+					var old_search = this.searches[search.task_id];
+					old_search.status = search.status;
+					old_search.note = search.note;
+					// old_search.num_results should always be zero
+					if(search.num_results != old_search.num_results){
+						// update results
+						old_search.num_results = search.num_results;
+						for(var i in search.results){
+							var year = search.results[i].year
+							if(typeof year  === "undefined"){
+								// Random integer, so that we don't group all the
+								// results with no year together
+								year = Math.random().toString().slice(2);
+							}
+							var key = year + '_' + search.results[i].image_hash;
+							if(this.$data.result_groups.hasOwnProperty(key)){
+								this.$data.result_groups[key].push(search.results[i]);
+							}else{
+								this.$set(this.result_groups, key, [search.results[i]]);
+							}
+						}
 					}
 				}
-				this.$data.task_ids = resp.task_ids;
+				this.task_ids = resp.task_ids;
 				this.get_results(errors);
 			}.bind(this));
 			$promise.fail(function(){
 				this.get_results(errors + 1);
-			});
+			}.bind(this));
 		}
 	}
 });
