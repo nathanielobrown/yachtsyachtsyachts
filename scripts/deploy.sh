@@ -35,7 +35,10 @@ docker run -d --restart always \
 	-e BROKER_NAME=$BROKER_NAME \
 	-e BACKEND_NAME=$BACKEND_NAME \
 	boat_search \
-	celery -A app.celery worker --loglevel=info --concurrency 12
+	celery -A app.celery worker --loglevel=info \
+		-P eventlet \
+		--max-memory-per-child 40000 \
+		--concurrency 20
 
 # Start app server
 APP_NAME=boat_search

@@ -63,7 +63,9 @@ def get_exchange_rate(currency1, currency2):
     if currency1 == currency2:
         return 1
     c = CurrencyRates()
-    return c.get_rate(currency1, currency2)
+    rate = c.get_rate(currency1, currency2)
+    del c
+    return rate
 
 
 @celery.task
@@ -76,6 +78,7 @@ def search_task(scraper_name, manufacturer, length):
             continue
         exchange_rate = get_exchange_rate(result['currency'], 'USD')
         result['parsed_price'] = result['parsed_price'] * exchange_rate
+    del scraper
     return results
 
 
