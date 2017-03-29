@@ -64,10 +64,20 @@ Vue.component('search-status', {
 	props: ['status', 'note', 'num_results', 'domain'],
 	computed:{
 		title: function(){
-			if(this.status == 'SUCCESS'){
-				return `${this.status} (${this.num_results} results)`;
-			}else{
-				return this.status;
+			switch(this.status){
+				case 'PENDING':
+					return 'This search is queued.'
+				case 'STARTED':
+					return `${self.domain} is being searched.`
+				case 'SUCCESS':
+					if(this.num_results == 0){
+						return 'No results found'
+					}else{
+						return `Found ${this.num_results} results.`;
+					}
+				case 'FAILURE':
+					return `Something went wrong while searching ${self.domain}.
+					        This error has been reported.`
 			}
 		}
 	},
