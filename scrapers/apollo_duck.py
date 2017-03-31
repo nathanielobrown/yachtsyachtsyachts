@@ -16,7 +16,7 @@ class ApolloDuckScraper(BaseScraper):
     # TODO lookup IDs for manufacture and length
     url = 'https://www.apolloduck.com/boats.phtml?id=848&mi=2381'
 
-    def search(self, manufacturer, length):
+    def search(self, manufacturer=None, length=None):
         # Get available manufacturers
         resp = self.session.get('https://www.apolloduck.com/brands.phtml')
         assert resp.status_code == 200

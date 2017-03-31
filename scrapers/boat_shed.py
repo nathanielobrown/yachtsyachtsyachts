@@ -15,7 +15,7 @@ class BoatShedScraper(BaseScraper):
            "bq=%7B%22manufacturer%22%3A%5B%22{manufacturer}%22%5D%2C%22"
            "{length}")
 
-    def search(self, manufacturer, length):
+    def search(self, manufacturer=None, length=None):
         length = float(length)
         min_length = int(math.floor(30.48 * length))
         max_length = int(math.ceil(30.48 * length))

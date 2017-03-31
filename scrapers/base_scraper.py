@@ -20,7 +20,7 @@ class BaseScraper(object):
             'Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) '
             'Chrome/56.0.2924.87 Safari/537.36')
 
-    def search(self, manufacturer, length):
+    def search(self, manufacturer=None, length=None):
         url = self.url.format(manufacturer=manufacturer, length=length)
         resp = self.session.get(url)
         assert resp.status_code == 200
@@ -53,14 +53,19 @@ class BaseScraper(object):
 
     def parse_search_results(self, html):
         soup = BeautifulSoup(html, 'lxml')
-        results = soup.select(self._results_css_selector)
-        parsed_results = map(self._parse_result, results)
-        parsed_results = [r for r in parsed_results if r]
-        processed_results = map(self._result_post_processing, parsed_results)
-        return processed_results
+        html_results = soup.select(self._results_css_selector)
+        parsed_results = []
+        for html_result in html_results:
+            result = self._parse_result(html_result)
+            if not result:
+                continue
+            result = self._result_post_processing(result)
+            result['html'] = unicode(html_result)
+            parsed_results.append(result)
+        return parsed_results
 
-    def search_and_parse(self, *args, **kwargs):
-        html = self.search(*args, **kwargs)
+    def search_and_parse(self, **kwargs):
+        html = self.search(**kwargs)
         return self.parse_search_results(html)
 
     @staticmethod
