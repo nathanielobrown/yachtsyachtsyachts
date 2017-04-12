@@ -26,6 +26,19 @@ docker run -d \
 	-p 6379:6379 \
 	redis
 
+# Start database
+DATABASE_NAME=postgres
+DB_CONN_STR="postgresql+psycopg2://postgres@$DATABASE_NAME:5432"
+docker rm -f $DATABASE_NAME
+docker run -d \
+	--restart always \
+	--network ooloo \
+	--hostname $DATABASE_NAME \
+	--name $DATABASE_NAME \
+	--expose 5432 \
+	--volume boat_search_postgres_data:/var/lib/postgresql/data \
+	postgres:9.5
+
 # Start workers
 WORKER_NAME=boat_search_celery_workers
 docker rm -f $WORKER_NAME
@@ -34,6 +47,7 @@ docker run -d --restart always \
 	--network ooloo \
 	-e BROKER_NAME=$BROKER_NAME \
 	-e BACKEND_NAME=$BACKEND_NAME \
+	-e DB_CONN_STR=$DB_CONN_STR \
 	boat_search \
 	celery -A app.celery worker --loglevel=info \
 		-P eventlet \
@@ -47,7 +61,8 @@ docker run -d --restart always \
 	--name $APP_NAME \
 	-e BROKER_NAME=$BROKER_NAME \
 	-e BACKEND_NAME=$BACKEND_NAME \
+	-e DB_CONN_STR=$DB_CONN_STR \
 	--network ooloo \
 	boat_search \
 	uwsgi --socket :80 --manage-script-name \
-	--mount /=app:app --workers 4
+	--mount /=app:app --workers 2 --threads 4

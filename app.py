@@ -224,7 +224,7 @@ def get_some_site_results(task_ids, min_wait=1, max_wait=20):
     new_results = False
     while time.time() < timeout:
         for task_wrapper in task_wrappers:
-            print task_wrapper.status
+            # print task_wrapper.status
             # Skip tasks that we've already resolved
             if task_wrapper.task_id not in task_ids:
                 continue

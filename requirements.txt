@@ -8,6 +8,8 @@ forex_python
 imagehash
 lxml
 pillow
+psycopg2
 raven[flask]
 requests
+sqlalchemy
 uwsgi

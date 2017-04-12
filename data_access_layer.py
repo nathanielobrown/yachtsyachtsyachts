@@ -13,6 +13,8 @@ class DataAccessLayer(object):
 
     def connect(self):
         self.engine = create_engine(self.connection_str, echo=self.echo)
+        model.Base.metadata.reflect(bind=self.engine)
+        model.Base.metadata.create_all(bind=self.engine)
         self.Session = sessionmaker(bind=self.engine)
         self.ScopedSession = scoped_session(self.Session)
         self.session = self.ScopedSession()
