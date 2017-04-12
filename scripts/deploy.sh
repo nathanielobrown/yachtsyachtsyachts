@@ -40,11 +40,12 @@ docker run -d \
 	postgres:9.5
 
 # Start workers
-WORKER_NAME=boat_search_celery_workers
+WORKER_NAME=boat-search-celery-workers
 docker rm -f $WORKER_NAME
 docker run -d --restart always \
 	--name $WORKER_NAME \
 	--network ooloo \
+	--hostname $WORKER_NAME \
 	-e BROKER_NAME=$BROKER_NAME \
 	-e BACKEND_NAME=$BACKEND_NAME \
 	-e DB_CONN_STR=$DB_CONN_STR \
@@ -55,7 +56,7 @@ docker run -d --restart always \
 		--concurrency 20
 
 # Start app server
-APP_NAME=boat_search
+APP_NAME=boat-search
 docker rm -f $APP_NAME
 docker run -d --restart always \
 	--name $APP_NAME \
@@ -63,6 +64,7 @@ docker run -d --restart always \
 	-e BACKEND_NAME=$BACKEND_NAME \
 	-e DB_CONN_STR=$DB_CONN_STR \
 	--network ooloo \
+	--hostname $APP_NAME \
 	boat_search \
 	uwsgi --socket :80 --manage-script-name \
 	--mount /=app:app --workers 2 --threads 4
