@@ -31,7 +31,9 @@ class BoatShedScraper(BaseScraper):
         a_tag = r.find('a')
         p['link'] = 'http://www.boatshed.com' + a_tag.attrs['href']
         p['title'] = self.clean_whitespace(a_tag.attrs['title'])
-        p['title'] += ', ' + r.find(class_='searchview_strapline').text
+        subtitle = r.find(class_='searchview_strapline')
+        if subtitle:
+            p['title'] += ', ' + subtitle.text
         p['image_url'] = r.find('img').attrs['src']
         resp = requests.get(p['link'])
         assert resp.status_code == 200
