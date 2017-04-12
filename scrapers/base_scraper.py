@@ -97,6 +97,9 @@ class BaseScraper(object):
     def parse_price(self, price_str):
         price_str = price_str.lower()
         groups = re.search('([\d\,\.]+)', price_str)
+        if not groups:
+            print 'Could not parse price string: {!r}'.format(price_str)
+            return None, None
         price_str_snippet = groups.group(1).split('.')[0]
         price = int(''.join((c for c in price_str_snippet if c.isdigit())))
         mapping = {

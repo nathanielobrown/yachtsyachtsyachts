@@ -4,14 +4,14 @@ from base_scraper import BaseScraper
 
 
 class BoatsScraper(BaseScraper):
-    _results_css_selector = '#search-results > div.boat-listings li'
+    _results_css_selector = '#search-results > div.boat-listings li a'
     url = ("http://www.boats.com/boats-for-sale/?make={manufacturer}&"
            "length-from={length}&length-to={length}&uom=ft&"
            "currency=usd")
 
     def _parse_result(self, r):
         p = {}
-        a_tag = r.find('a')
+        a_tag = r
         p['link'] = self.base_url() + a_tag.attrs['href']
         p['title'] = r.find('h2').text.strip()
         p['location'] = r.find(class_='country').text.strip()
