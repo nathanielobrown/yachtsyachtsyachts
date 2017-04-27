@@ -10,7 +10,7 @@ class CO32Scraper(BaseScraper):
     def search_and_parse(self, manufacturer=None, length=None):
         # This site is only for Contessa 32's, so no need to search if that's
         # not what we are looking for
-        if manufacturer.lower() == 'contessa' and float(length) == 32:
+        if manufacturer.lower() == 'contessa' and str(length.strip()) == '32':
             return super(CO32Scraper, self).search_and_parse(
                 manufacturer=manufacturer, length=length)
         else:
