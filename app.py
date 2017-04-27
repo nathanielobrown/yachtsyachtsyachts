@@ -128,7 +128,8 @@ def search_task(scraper_name, manufacturer, length):
         if 'currency' not in result:
             continue
         exchange_rate = get_exchange_rate(result['currency'], 'USD')
-        result['parsed_price'] = result['parsed_price'] * exchange_rate
+        if result['parsed_price']:
+            result['parsed_price'] = result['parsed_price'] * exchange_rate
         html = result.pop('html')
         sr = m.SearchResult(
             html=html,
