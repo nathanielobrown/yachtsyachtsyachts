@@ -253,7 +253,7 @@ def error():
 
 @app.route('/search/')
 def search():
-    if request.is_xhr:
+    if request.args.get('format') == 'json':
         manufacturer = request.args['manufacturer'].strip()
         length = request.args['length'].strip()
         searches = search_all(manufacturer, length)

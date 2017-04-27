@@ -144,7 +144,8 @@ var search = new Vue({
 			this.update_url();
 			var qs = $.param({
 				manufacturer:this.manufacturer,
-				length:this.length
+				length:this.length,
+				format:'json'
 			});
 			var url = '/search/?' + qs;
 			console.log(url);
