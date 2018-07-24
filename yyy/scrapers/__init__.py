@@ -14,7 +14,7 @@ _modules = [import_module('.' + x, __package__) for x in _scraper_module_names]
 def _find_scraper(module):
     """Returns the first class that inherits from BaseScraper in a module"""
     for name, obj in module.__dict__.items():
-        if isinstance(obj, type) and issubclass(obj, BaseScraper):
+        if isinstance(obj, type) and issubclass(obj, BaseScraper) and obj != BaseScraper:
             return name, obj
     raise Exception('Scraper not found in {!r}'.format(obj.__name__))
 

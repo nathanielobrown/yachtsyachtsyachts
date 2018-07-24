@@ -1,14 +1,16 @@
-FROM continuumio/miniconda:4.1.11
+FROM continuumio/miniconda3:4.5.4
 
 ENV install_dir=/home/app
 
-RUN apt-get update && apt-get install -y gcc rlwrap vim
+# RUN apt-get update && apt-get install -y gcc rlwrap vim
+
+RUN conda install -c conda-forge -y pywavelets uwsgi
 
 ADD requirements.txt $install_dir/
 
-RUN pip install --no-cache-dir -r $install_dir/requirements.txt
+RUN pip install -r $install_dir/requirements.txt
 
-ADD . $install_dir/
+ADD ./yyy $install_dir/
 
 WORKDIR $install_dir
 

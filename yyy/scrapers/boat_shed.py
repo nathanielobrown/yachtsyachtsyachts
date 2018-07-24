@@ -29,8 +29,8 @@ class BoatShedScraper(BaseScraper):
     def _parse_result(self, r):
         p = {}
         a_tag = r.find('a')
-        p['link'] = urllib.basejoin('http://www.boatshed.com',
-                                    a_tag.attrs['href'])
+        p['link'] = urllib.parse.urljoin('http://www.boatshed.com',
+                                         a_tag.attrs['href'])
         p['title'] = self.clean_whitespace(a_tag.attrs['title'])
         subtitle = r.find(class_='searchview_strapline')
         if subtitle:

@@ -3,9 +3,10 @@ celery[redis]
 eventlet
 flask
 flask_admin
-flask_cache
+Flask-Caching
 forex_python
 imagehash
+ipdb
 lxml
 pillow
 psycopg2

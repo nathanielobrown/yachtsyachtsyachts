@@ -1,0 +1,58 @@
+version: "3"
+networks:
+  ooloo:
+    external: true
+volumes:
+  yyy_postgres_data:
+services:
+  rabbitmq:
+    image: rabbitmq:3
+    restart: always
+    ports:
+      - "5672"
+    container_name: yyy-rabbitmq
+    networks:
+      - ooloo
+  redis:
+    image: redis
+    container_name: yyy-redis
+    ports:
+      - "6379"
+    restart: always
+    networks:
+      - ooloo
+  postgres:
+    image: postgres:9.5
+    container_name: yyy-postgres
+    ports:
+      - "5432"
+    restart: always
+    networks:
+      - ooloo
+    volumes:
+      - yyy_postgres_data:/var/lib/postgresql/data
+  celery:
+    image: yyy
+    container_name: yyy-celery
+    restart: always
+    networks:
+      - ooloo
+    environment:
+      - BROKER_NAME=yyy-rabbitmq
+      - BACKEND_NAME=yyy-redis
+      - DB_CONN_STR=postgresql+psycopg2://postgres@postgres:5432
+    command: >
+      celery -A app.celery worker --loglevel=info -P
+      eventlet --max-memory-per-child 40000 --concurrency 20
+  flask:
+    image: yyy
+    container_name: yyy-flask
+    networks:
+      - ooloo
+    environment:
+      - BROKER_NAME=yyy-rabbitmq
+      - BACKEND_NAME=yyy-redis
+      - DB_CONN_STR=postgresql+psycopg2://postgres@postgres:5432
+    command: >
+      uwsgi --socket :80 --manage-script-name
+      --mount /=app:app --workers 2 --threads 4

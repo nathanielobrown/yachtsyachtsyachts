@@ -3,9 +3,10 @@ import os
 import pprint
 import time
 import urllib.parse
+import sys
 
 from flask import Flask, render_template, request, jsonify, g
-from flask_cache import Cache
+from flask_caching import Cache
 from raven.contrib.celery import register_signal, register_logger_signal
 from raven.contrib.flask import Sentry
 import flask_admin
@@ -59,6 +60,12 @@ def teardown_request(r):
     g.db.close()
     return r
 
+# import ipdb
+# @app.errorhandler(Exception)
+# def handle_invalid_usage(error):
+#     print(error)
+#     ipdb.post_mortem(sys.exc_info()[2])
+    # import ipdb; ipdb.set_trace()
 
 class Celery(celery.Celery):
 
