@@ -12,12 +12,12 @@ Base = declarative_base()
 
 class DictMixin(object):
     def __iter__(self):
-        for key in self.__mapper__.c.keys():
+        for key in list(self.__mapper__.c.keys()):
             yield (key, getattr(self, key))
 
     def _asdict(self):
         result = OrderedDict()
-        for key in self.__mapper__.c.keys():
+        for key in list(self.__mapper__.c.keys()):
             result[key] = getattr(self, key)
         return result
 

@@ -1,6 +1,6 @@
 
 
-from base_scraper import BaseScraper
+from .base_scraper import BaseScraper
 
 
 class CO32Scraper(BaseScraper):
@@ -24,5 +24,5 @@ class CO32Scraper(BaseScraper):
         p['location'] = r.find(class_='field--location').text.strip()
         p['year'] = r.find(class_='field--year').text.strip()
         p['price'] = r.find(class_='field--price').text.strip()
-        p['title'] = u'Contessa 32, {}'.format(p['name'])
+        p['title'] = 'Contessa 32, {}'.format(p['name'])
         return p

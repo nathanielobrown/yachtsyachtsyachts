@@ -1,7 +1,7 @@
 import re
 
 
-from base_scraper import BaseScraper
+from .base_scraper import BaseScraper
 
 
 class ApolloDuckScraper(BaseScraper):
@@ -27,8 +27,8 @@ class ApolloDuckScraper(BaseScraper):
             manufacturer_id = manufacturer_ids[manufacturer.lower()]
         else:
             # Fall back to freeform search
-            print 'Could not find manufacturer {}, falling back to freeform'\
-                  ' search'.format(manufacturer)
+            print('Could not find manufacturer {}, falling back to freeform'\
+                  ' search'.format(manufacturer))
             return self.google_search(manufacturer, length)
         url = 'https://www.apolloduck.com/boats.phtml?' \
               'id={:d}'.format(manufacturer_id)
@@ -42,8 +42,8 @@ class ApolloDuckScraper(BaseScraper):
             model_id = model_ids[str(length)]
         else:
             # Fall back to freeform search
-            print 'Could not find model {}, for manufacturer {} falling back '\
-                  'to freeform'.format(length, manufacturer)
+            print('Could not find model {}, for manufacturer {} falling back '\
+                  'to freeform'.format(length, manufacturer))
             return self.google_search(manufacturer, length)
         url = 'https://www.apolloduck.com/boats.phtml?' \
               'id={}&mi={}'.format(manufacturer_id, model_id)

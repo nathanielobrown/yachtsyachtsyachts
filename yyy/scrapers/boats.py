@@ -1,6 +1,6 @@
 
 
-from base_scraper import BaseScraper
+from .base_scraper import BaseScraper
 
 
 class BoatsScraper(BaseScraper):

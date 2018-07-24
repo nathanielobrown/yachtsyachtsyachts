@@ -1,10 +1,10 @@
 import math
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import requests
 from bs4 import BeautifulSoup
 
-from base_scraper import BaseScraper
+from .base_scraper import BaseScraper
 
 
 class BoatShedScraper(BaseScraper):
@@ -21,7 +21,7 @@ class BoatShedScraper(BaseScraper):
         max_length = int(math.ceil(30.48 * length))
         length_str = 'boatdetails_loa":["{}..{}"]}}'.format(min_length,
                                                            max_length)
-        length_str = urllib.quote(length_str)
+        length_str = urllib.parse.quote(length_str)
         url = self.url.format(manufacturer=manufacturer, length=length_str)
         resp = self.session.get(url)
         return resp.content

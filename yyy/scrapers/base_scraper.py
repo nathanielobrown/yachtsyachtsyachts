@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 import re
-import urlparse
+import urllib.parse
 import uuid
 
 from bs4 import BeautifulSoup
@@ -60,7 +60,7 @@ class BaseScraper(object):
             if not result:
                 continue
             result = self._result_post_processing(result)
-            result['html'] = unicode(html_result)
+            result['html'] = str(html_result)
             parsed_results.append(result)
         return parsed_results
 
@@ -74,12 +74,12 @@ class BaseScraper(object):
 
     @classmethod
     def base_url(cls):
-        parsed_url = urlparse.urlparse(cls.url)
+        parsed_url = urllib.parse.urlparse(cls.url)
         return '{}://{}'.format(parsed_url.scheme, parsed_url.netloc)
 
     @classmethod
     def domain(cls):
-        parsed_url = urlparse.urlparse(cls.url)
+        parsed_url = urllib.parse.urlparse(cls.url)
         return parsed_url.netloc
 
     def process_url(self, url):
@@ -87,7 +87,7 @@ class BaseScraper(object):
         if url.startswith('http'):
             return url
         elif url.startswith('//'):
-            parsed_url = urlparse.urlparse(self.url)
+            parsed_url = urllib.parse.urlparse(self.url)
             return '{}:{}'.format(parsed_url.scheme, url)
         elif url.startswith('/'):
             return self.base_url() + url
@@ -98,16 +98,16 @@ class BaseScraper(object):
         price_str = price_str.lower()
         groups = re.search('([\d\,\.]+)', price_str)
         if not groups:
-            print 'Could not parse price string: {!r}'.format(price_str)
+            print('Could not parse price string: {!r}'.format(price_str))
             return None, None
         price_str_snippet = groups.group(1).split('.')[0]
         price = int(''.join((c for c in price_str_snippet if c.isdigit())))
         mapping = {
-            'GBP': [u'£', 'gbp', '&pound;'],
-            'EUR': [u'€', 'eur', '&euro;'],
+            'GBP': ['£', 'gbp', '&pound;'],
+            'EUR': ['€', 'eur', '&euro;'],
             'USD': ['$', 'usd']
         }
-        for currency, symbols in mapping.iteritems():
+        for currency, symbols in mapping.items():
             for symbol in symbols:
                 if symbol in price_str:
                     price_currency = currency

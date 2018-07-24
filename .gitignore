@@ -6,3 +6,4 @@ cache/
 .noseids
 *.sublime*
 scripts/one_click.sh
+.mypy_cache

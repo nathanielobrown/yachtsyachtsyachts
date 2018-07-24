@@ -2,7 +2,7 @@ import datetime
 import os
 import pprint
 import time
-import urlparse
+import urllib.parse
 
 from flask import Flask, render_template, request, jsonify, g
 from flask_cache import Cache
@@ -36,9 +36,9 @@ if backend_host:
 else:
     backend_str = 'rpc://'
 
-print 'DB_STR: ', db_conn_str
-print 'BROKER: ', broker_str
-print 'BACKEND: ', backend_str
+print('DB_STR: ', db_conn_str)
+print('BROKER: ', broker_str)
+print('BACKEND: ', backend_str)
 dal = DataAccessLayer(db_conn_str)
 dal.connect()
 # dal.erase_database()
@@ -84,7 +84,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'filesystem',
 @app.template_filter('domain_name')
 def domain_name(s):
     """Takes a URL and returns the domain portion"""
-    return urlparse.urlparse(s).netloc
+    return urllib.parse.urlparse(s).netloc
 
 
 @cache.memoize(timeout=86400)
@@ -109,7 +109,7 @@ def search_task(scraper_name, manufacturer, length):
     q = q.filter(m.Search.kwargs['length'].astext.cast(m.String) == length)
     search = q.first()
     if search:
-        print "Using 'dat cache!!!"
+        print("Using 'dat cache!!!")
         results = [dict(result.parsed_results) for result in search.results]
         return results
     kwargs = {
@@ -151,7 +151,7 @@ def search_task(scraper_name, manufacturer, length):
 
 def search_all(manufacturer, length):
     tasks = []
-    for scraper_name, scraper in scrapers.all_scrapers.iteritems():
+    for scraper_name, scraper in scrapers.all_scrapers.items():
         args = (scraper_name, manufacturer, length)
         kwargs = {}
         async_result = search_task.apply_async(args=args, kwargs=kwargs)
@@ -187,7 +187,7 @@ def search_all(manufacturer, length):
 class SearchTaskWrapper(object):
     def __init__(self, task):
         """task an either be a task_id or a task"""
-        if isinstance(task, basestring):
+        if isinstance(task, str):
             self.task_id = task
         else:
             import ipdb; ipdb.set_trace()
@@ -235,7 +235,7 @@ def get_some_site_results(task_ids, min_wait=1, max_wait=20):
                 task_wrapper.update_results()
         # Return if we've waited long enough and found some results
         if new_results and time.time() > min_time:
-            return map(dict, task_wrappers), list(task_ids)
+            return list(map(dict, task_wrappers)), list(task_ids)
         time.sleep(.5)
     raise Exception('Get Result timed out')
 
