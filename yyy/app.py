@@ -140,7 +140,7 @@ def search_task(scraper_name, manufacturer, length):
         session.add(search)
     except Exception:
         session.rollback()
-        raise()
+        raise
     else:
         session.commit()
     finally:
