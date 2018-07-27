@@ -16,5 +16,6 @@ psycopg2-binary
 pytest
 raven[flask]
 requests
+requests-cache
 sqlalchemy
 uwsgi

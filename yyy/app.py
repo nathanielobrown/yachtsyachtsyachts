@@ -3,6 +3,7 @@ import os
 import pprint
 import time
 import urllib.parse
+from typing import Dict, List
 
 from flask import Flask, render_template, request, jsonify, g
 from flask_caching import Cache
@@ -31,7 +32,10 @@ db_conn_str = os.environ.get(
 )
 broker_str = "pyamqp://guest@{}:5672".format(broker_host)
 # TODO: move to env var
-sentry_dsn = "https://a89cf42846224019b1a72f7c56aa2f6a:13a3e6fd" "0da94e278060355bb60bb933@sentry.io/151954"
+sentry_dsn = (
+    "https://a89cf42846224019b1a72f7c56aa2f6a:13a3e6fd"
+    "0da94e278060355bb60bb933@sentry.io/151954"
+)
 if backend_host:
     backend_str = "redis://{}:6379".format(backend_host)
 else:
@@ -69,7 +73,7 @@ def teardown_request(r):
 
 
 class Celery(celery.Celery):
-    def on_configure(self):
+    def on_configure(self) -> None:
         client = raven.Client(sentry_dsn)
 
         # register a custom filter to filter out duplicate logs
@@ -87,13 +91,13 @@ cache = Cache(app, config={"CACHE_TYPE": "filesystem", "CACHE_DIR": "cache"})
 
 
 @app.template_filter("domain_name")
-def domain_name(s):
+def domain_name(s: str) -> str:
     """Takes a URL and returns the domain portion"""
     return urllib.parse.urlparse(s).netloc
 
 
 @cache.memoize(timeout=86400)
-def get_exchange_rate(currency1, currency2):
+def get_exchange_rate(currency1: str, currency2: str) -> float:
     if currency1 == currency2:
         return 1
     c = CurrencyRates()
@@ -103,7 +107,7 @@ def get_exchange_rate(currency1, currency2):
 
 
 @celery.task
-def search_task(scraper_name, manufacturer, length):
+def search_task(scraper_name: str, manufacturer: str, length: float) -> List[Dict]:
     session = dal.ScopedSession()
     # Check if we already have results for this
     stale_time = datetime.datetime.now() - datetime.timedelta(hours=1)

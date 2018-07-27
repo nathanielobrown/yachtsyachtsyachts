@@ -21,6 +21,10 @@ class BaseScraper(object):
             "Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/56.0.2924.87 Safari/537.36"
         )
+        # Placeholder for image_url when we do not find one
+        self.image_not_found_url = (
+            "https://dubsism.files.wordpress.com/2017/12/image-not-found.png?w=1094"
+        )
 
     def search(self, manufacturer=None, length=None):
         url = self.url.format(manufacturer=manufacturer, length=length)

@@ -1,5 +1,8 @@
 import math
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
+import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -46,5 +49,6 @@ class BoatShedScraper(BaseScraper):
             label_value = label.findNext("td").text.strip()
             p[label_text] = label_value
         p["location"] = p.pop("lying")
-        p["year"] = int(p["year"])
+        year_label = soup.find("strong", text=re.compile("Year"))
+        p["year"] = int(year_label.parent.findNext("div").text.strip())
         return p

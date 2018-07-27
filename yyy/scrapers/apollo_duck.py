@@ -21,7 +21,7 @@ class ApolloDuckScraper(BaseScraper):
         # Get available manufacturers
         resp = self.session.get("https://www.apolloduck.com/brands.phtml")
         assert resp.status_code == 200
-        matches = re.findall('/boats.phtml\?id=(\d+)">(.*?)<', resp.content)
+        matches = re.findall('/boats.phtml\?id=(\d+)">(.*?)<', resp.text)
         manufacturer_ids = {
             make.lower().strip(): int(id.strip()) for id, make in matches
         }
@@ -39,7 +39,7 @@ class ApolloDuckScraper(BaseScraper):
         )
         resp = self.session.get(url)
         assert resp.status_code == 200
-        matches = re.findall('/boats.phtml\?id=\d+&amp;mi=(\d+)">(.*?)<', resp.content)
+        matches = re.findall('/boats.phtml\?id=\d+&amp;mi=(\d+)">(.*?)<', resp.text)
         model_ids = {model.lower().strip(): int(id.strip()) for id, model in matches}
         if str(length) in model_ids:
             model_id = model_ids[str(length)]
@@ -60,13 +60,16 @@ class ApolloDuckScraper(BaseScraper):
     def google_search(self, manufacturer, length):
         raise Exception("not implimented")
 
-    @staticmethod
-    def _parse_result(r):
+    def _parse_result(self, r):
         p = {}
         p["title"] = r(class_=re.compile(".*Title$"))[0].text.strip()
-        p["image_url"] = r.select(".PanelImage img")[0].attrs["src"]
+        img = r.select(".PanelImage img")
+        if img:
+            p["image_url"] = img[0].attrs["src"]
+        else:
+            p["image_url"] = self.image_not_found_url
         labels = r.select(".PanelSpecLabel")
-        p["link"] = r.select(".PanelImage a")[0].attrs["href"]
+        p["link"] = r.select(".PanelImage a, a.FeatureTitle")[0].attrs["href"]
         if not p["link"].startswith("http"):
             p["link"] = "https://www.apolloduck.com" + p["link"]
         for label in labels:

@@ -20,10 +20,16 @@ class CO32Scraper(BaseScraper):
     def _parse_result(self, r):
         p = {}
         p["link"] = r.find("a").attrs["href"]
-        p["image_url"] = r.find("img").attrs["src"]
+        img = r.find("img")
+        if img:
+            p["image_url"] = img.attrs["src"]
+        else:
+            p["image_url"] = self.image_not_found_url
         p["name"] = r.find(class_="views-field-title").text.strip()
         p["location"] = r.find(class_="field--location").text.strip()
-        p["year"] = r.find(class_="field--year").text.strip()
+        year = r.find(class_="field--year")
+        if year:
+            p["year"] = year.text.strip()
         p["price"] = r.find(class_="field--price").text.strip()
         p["title"] = "Contessa 32, {}".format(p["name"])
         return p
