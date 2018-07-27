@@ -12,8 +12,9 @@ class DataAccessLayer(object):
         self.echo = False
 
     def connect(self):
-        self.engine = create_engine(self.connection_str, echo=self.echo,
-                                    pool_size=20, max_overflow=30)
+        self.engine = create_engine(
+            self.connection_str, echo=self.echo, pool_size=20, max_overflow=30
+        )
         model.Base.metadata.reflect(bind=self.engine)
         model.Base.metadata.create_all(bind=self.engine)
         self.Session = sessionmaker(bind=self.engine)

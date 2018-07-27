@@ -3,12 +3,10 @@ import os
 import pprint
 import time
 import urllib.parse
-import sys
 
 from flask import Flask, render_template, request, jsonify, g
 from flask_caching import Cache
 from raven.contrib.celery import register_signal, register_logger_signal
-from raven.contrib.flask import Sentry
 import flask_admin
 from flask_admin.contrib.sqla import ModelView
 
@@ -23,25 +21,25 @@ import model as m
 
 app = Flask(__name__)
 # TODO: move to env var
-app.secret_key = 'asdfasghrwgn;wedsvcihjo[arfe;qcinvprwoe;sadjkv'
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.secret_key = "asdfasghrwgn;wedsvcihjo[arfe;qcinvprwoe;sadjkv"
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-broker_host = os.environ.get('BROKER_NAME', 'localhost')
-backend_host = os.environ.get('BACKEND_NAME', 'localhost')
-db_conn_str = os.environ.get('DB_CONN_STR',
-                             'postgresql+psycopg2://postgres@localhost:5433')
-broker_str = 'pyamqp://guest@{}:5672'.format(broker_host)
+broker_host = os.environ.get("BROKER_NAME", "localhost")
+backend_host = os.environ.get("BACKEND_NAME", "localhost")
+db_conn_str = os.environ.get(
+    "DB_CONN_STR", "postgresql+psycopg2://postgres@localhost:5433"
+)
+broker_str = "pyamqp://guest@{}:5672".format(broker_host)
 # TODO: move to env var
-sentry_dsn = 'https://a89cf42846224019b1a72f7c56aa2f6a:13a3e6fd' \
-             '0da94e278060355bb60bb933@sentry.io/151954'
+sentry_dsn = "https://a89cf42846224019b1a72f7c56aa2f6a:13a3e6fd" "0da94e278060355bb60bb933@sentry.io/151954"
 if backend_host:
-    backend_str = 'redis://{}:6379'.format(backend_host)
+    backend_str = "redis://{}:6379".format(backend_host)
 else:
-    backend_str = 'rpc://'
+    backend_str = "rpc://"
 
-print('DB_STR: ', db_conn_str)
-print('BROKER: ', broker_str)
-print('BACKEND: ', backend_str)
+print("DB_STR: ", db_conn_str)
+print("BROKER: ", broker_str)
+print("BACKEND: ", backend_str)
 dal = DataAccessLayer(db_conn_str)
 dal.connect()
 # dal.erase_database()
@@ -51,9 +49,8 @@ admin.add_view(ModelView(m.Search, dal.ScopedSession))
 admin.add_view(ModelView(m.SearchResult, dal.ScopedSession))
 
 
-
 @app.before_request
-def before_request():
+def before_request() -> None:
     g.db = dal.ScopedSession()
 
 
@@ -62,15 +59,16 @@ def teardown_request(r):
     g.db.close()
     return r
 
+
 # import ipdb
 # @app.errorhandler(Exception)
 # def handle_invalid_usage(error):
 #     print(error)
 #     ipdb.post_mortem(sys.exc_info()[2])
-    # import ipdb; ipdb.set_trace()
+# import ipdb; ipdb.set_trace()
+
 
 class Celery(celery.Celery):
-
     def on_configure(self):
         client = raven.Client(sentry_dsn)
 
@@ -81,16 +79,14 @@ class Celery(celery.Celery):
         register_signal(client)
 
 
-celery = Celery('app', broker=broker_str,
-                backend=backend_str)
-celery.conf['task_track_started'] = True
+celery = Celery("app", broker=broker_str, backend=backend_str)
+celery.conf["task_track_started"] = True
 
-cache = Cache(app, config={'CACHE_TYPE': 'filesystem',
-                           'CACHE_DIR': 'cache'})
+cache = Cache(app, config={"CACHE_TYPE": "filesystem", "CACHE_DIR": "cache"})
 # sentry = Sentry(app, dsn=sentry_dsn)
 
 
-@app.template_filter('domain_name')
+@app.template_filter("domain_name")
 def domain_name(s):
     """Takes a URL and returns the domain portion"""
     return urllib.parse.urlparse(s).netloc
@@ -113,37 +109,28 @@ def search_task(scraper_name, manufacturer, length):
     stale_time = datetime.datetime.now() - datetime.timedelta(hours=1)
     q = session.query(m.Search).filter(m.Search.search_time > stale_time)
     q = q.filter_by(scraper_name=scraper_name)
-    q = q.filter(m.Search.kwargs['manufacturer'].astext.cast(m.String) ==
-                 manufacturer)
-    q = q.filter(m.Search.kwargs['length'].astext.cast(m.String) == length)
+    q = q.filter(m.Search.kwargs["manufacturer"].astext.cast(m.String) == manufacturer)
+    q = q.filter(m.Search.kwargs["length"].astext.cast(m.String) == length)
     search = q.first()
     if search:
         print("Using 'dat cache!!!")
         results = [dict(result.parsed_results) for result in search.results]
         return results
-    kwargs = {
-        'manufacturer': manufacturer,
-        'length': length
-    }
+    kwargs = {"manufacturer": manufacturer, "length": length}
     scraper = scrapers.all_scrapers[scraper_name]()
     search = m.Search(
-        scraper_name=scraper_name,
-        site_domain=scraper.domain(),
-        kwargs=kwargs
+        scraper_name=scraper_name, site_domain=scraper.domain(), kwargs=kwargs
     )
     results = scraper.search_and_parse(**kwargs)
     # Convert currency to USD
     for result in results:
-        if 'currency' not in result:
+        if "currency" not in result:
             continue
-        exchange_rate = get_exchange_rate(result['currency'], 'USD')
-        if result['parsed_price']:
-            result['parsed_price'] = result['parsed_price'] * exchange_rate
-        html = result.pop('html')
-        sr = m.SearchResult(
-            html=html,
-            parsed_results=result
-        )
+        exchange_rate = get_exchange_rate(result["currency"], "USD")
+        if result["parsed_price"]:
+            result["parsed_price"] = result["parsed_price"] * exchange_rate
+        html = result.pop("html")
+        sr = m.SearchResult(html=html, parsed_results=result)
         search.results.append(sr)
     try:
         session.add(search)
@@ -172,7 +159,7 @@ def search_all(manufacturer, length):
             "note": None,
             "args": args,
             "kwargs": kwargs,
-            "domain": scraper.domain()
+            "domain": scraper.domain(),
         }
         tasks.append(task)
     return tasks
@@ -193,13 +180,16 @@ def search_all(manufacturer, length):
 #         results.extend(result)
 #     return results
 
+
 class SearchTaskWrapper(object):
     def __init__(self, task):
         """task an either be a task_id or a task"""
         if isinstance(task, str):
             self.task_id = task
         else:
-            import ipdb; ipdb.set_trace()
+            import ipdb
+
+            ipdb.set_trace()
         self.async_result = search_task.AsyncResult(self.task_id)
         self.results = []
         self.note = None
@@ -246,51 +236,51 @@ def get_some_site_results(task_ids, min_wait=1, max_wait=20):
         if new_results and time.time() > min_time:
             return list(map(dict, task_wrappers)), list(task_ids)
         time.sleep(.5)
-    raise Exception('Get Result timed out')
+    raise Exception("Get Result timed out")
 
 
-@app.route('/')
+@app.route("/")
 def home():
     num_scrapers = len(scrapers.all_scrapers)
-    return render_template('home.html', num_scrapers=num_scrapers)
+    return render_template("home.html", num_scrapers=num_scrapers)
 
 
-@app.route('/error')
+@app.route("/error")
 def error():
     return 1 / 0
 
 
-@app.route('/search/')
+@app.route("/search/")
 def search():
-    if request.args.get('format') == 'json':
-        manufacturer = request.args['manufacturer'].strip()
-        length = request.args['length'].strip()
+    if request.args.get("format") == "json":
+        manufacturer = request.args["manufacturer"].strip()
+        length = request.args["length"].strip()
         searches = search_all(manufacturer, length)
         return jsonify(searches=searches)
     else:
-        return render_template('home.html')
+        return render_template("home.html")
 
 
-@app.route('/search/results/', methods=['POST'])
+@app.route("/search/results/", methods=["POST"])
 def search_results():
-    task_ids = request.get_json()['task_ids']
+    task_ids = request.get_json()["task_ids"]
     searches, remaining_task_ids = get_some_site_results(task_ids, min_wait=0)
     return jsonify(searches=searches, task_ids=remaining_task_ids)
 
 
-@app.route('/search_raw/')
+@app.route("/search_raw/")
 def search_raw():
-    manufacturer = request.args['manufacturer'].strip()
-    length = request.args['length'].strip()
+    manufacturer = request.args["manufacturer"].strip()
+    length = request.args["length"].strip()
     results = search_all(manufacturer, length)
-    return '<pre>{}</pre>'.format(pprint.pformat(results))
+    return "<pre>{}</pre>".format(pprint.pformat(results))
 
 
-@app.route('/clear_cache/')
+@app.route("/clear_cache/")
 def clear_cache():
     cache.clear()
-    return 'Cache cleared.'
+    return "Cache cleared."
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
