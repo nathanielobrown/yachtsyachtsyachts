@@ -1,6 +1,8 @@
 beautifulsoup4
+black
 celery[redis]
 eventlet
+flake8
 flask
 flask_admin
 Flask-Caching
@@ -8,8 +10,9 @@ forex_python
 imagehash
 ipdb
 lxml
+mypy
 pillow
-psycopg2
+psycopg2-binary
 raven[flask]
 requests
 sqlalchemy

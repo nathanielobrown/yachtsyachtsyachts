@@ -12,6 +12,7 @@ services:
   celery:
     restart: "no"
   flask:
+    container_name: yyy-flask
     restart: "no"
     volumes:
       - ./yyy:/home/app
