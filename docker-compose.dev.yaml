@@ -1,6 +1,6 @@
 version: "3"
 networks:
-  ooloo:
+  nginx:
     external: false
 services:
   rabbitmq:

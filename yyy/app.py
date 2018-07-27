@@ -22,6 +22,7 @@ import model as m
 
 
 app = Flask(__name__)
+# TODO: move to env var
 app.secret_key = 'asdfasghrwgn;wedsvcihjo[arfe;qcinvprwoe;sadjkv'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
@@ -30,6 +31,7 @@ backend_host = os.environ.get('BACKEND_NAME', 'localhost')
 db_conn_str = os.environ.get('DB_CONN_STR',
                              'postgresql+psycopg2://postgres@localhost:5433')
 broker_str = 'pyamqp://guest@{}:5672'.format(broker_host)
+# TODO: move to env var
 sentry_dsn = 'https://a89cf42846224019b1a72f7c56aa2f6a:13a3e6fd' \
              '0da94e278060355bb60bb933@sentry.io/151954'
 if backend_host:
