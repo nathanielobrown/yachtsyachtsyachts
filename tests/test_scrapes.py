@@ -16,7 +16,7 @@ class TestScrapers(BaseTest):
     pass
 
 
-for name, Scraper in scrapers.all_scrapers.iteritems():
+for name, Scraper in scrapers.all_scrapers.items():
     def wrapper(name, Scraper):
         def test(self):
             scraper = Scraper()
@@ -26,12 +26,12 @@ for name, Scraper in scrapers.all_scrapers.iteritems():
             pprint.pprint(parsed_results)
         return test
     f = wrapper(name, Scraper)
-    f.func_name = 'test_' + name
-    print f.func_name
-    setattr(TestScrapers, f.func_name, f)
+    f.__name__ = 'test_' + name
+    print(f.__name__)
+    setattr(TestScrapers, f.__name__, f)
 del f
 
 
 if __name__ == '__main__':
-    print 'testing....'
+    print('testing....')
     unittest.main()
