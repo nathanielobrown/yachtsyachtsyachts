@@ -5,3 +5,7 @@ cache/
 **/__pycache__
 *.csv
 *.pyc
+*.db
+.mypy_cache/
+.vscode/
+*.sqlite

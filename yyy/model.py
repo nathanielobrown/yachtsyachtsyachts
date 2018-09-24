@@ -34,7 +34,7 @@ class Search(Base, DictMixin):
     site_domain = Column(String, nullable=False)
     kwargs = Column(JSON, nullable=False)
 
-    results = relationship("SearchResult")
+    results = relationship("SearchResult", cascade="all")
 
 
 # class Boat(Base, DictMixin):
