@@ -21,10 +21,11 @@ class ApolloDuckScraper(BaseScraper):
         # Get available manufacturers
         resp = self.session.get("https://www.apolloduck.com/brands.phtml")
         assert resp.status_code == 200
-        matches = re.findall('/boats.phtml\?id=(\d+)">(.*?)<', resp.text)
+        matches = re.findall('href="/boats/(.+?)">(.*?)<', resp.text)
         manufacturer_ids = {
-            make.lower().strip(): int(id.strip()) for id, make in matches
+            make.lower().strip(): id.strip() for id, make in matches
         }
+        assert len(manufacturer_ids) > 0
         if manufacturer.lower() in manufacturer_ids:
             manufacturer_id = manufacturer_ids[manufacturer.lower()]
         else:
@@ -34,12 +35,12 @@ class ApolloDuckScraper(BaseScraper):
                 " search".format(manufacturer)
             )
             return self.google_search(manufacturer, length)
-        url = "https://www.apolloduck.com/boats.phtml?" "id={:d}".format(
+        url = "https://www.apolloduck.com/boats/{}".format(
             manufacturer_id
         )
         resp = self.session.get(url)
         assert resp.status_code == 200
-        matches = re.findall('/boats.phtml\?id=\d+&amp;mi=(\d+)">(.*?)<', resp.text)
+        matches = re.findall(f'/boats/{manufacturer_id}/(\d+)">(.*?)<', resp.text)
         model_ids = {model.lower().strip(): int(id.strip()) for id, model in matches}
         if str(length) in model_ids:
             model_id = model_ids[str(length)]
@@ -50,7 +51,7 @@ class ApolloDuckScraper(BaseScraper):
                 "to freeform".format(length, manufacturer)
             )
             return self.google_search(manufacturer, length)
-        url = "https://www.apolloduck.com/boats.phtml?" "id={}&mi={}".format(
+        url = "https://www.apolloduck.com/boats/{}/{}?limit=100".format(
             manufacturer_id, model_id
         )
         resp = self.session.get(url)
